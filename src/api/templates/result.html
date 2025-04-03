@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Result</title>
+    <style>
+        body { font-family: Arial; text-align: center; padding: 50px; }
+        .fraud { color: red; font-size: 24px; }
+        .legit { color: green; font-size: 24px; }
+        .probability { font-size: 18px; margin: 20px 0; }
+        .back-btn { display: inline-block; margin-top: 20px; padding: 10px 15px; background: #333; color: white; text-decoration: none; }
+    </style>
+</head>
+<body>
+    {% if is_fraud %}
+    <h1 class="fraud">⚠️ Fraud Detected!</h1>
+    {% else %}
+    <h1 class="legit">✅ Legitimate Transaction</h1>
+    {% endif %}
+    
+    <div class="probability">
+        Fraud Probability: <strong>{{ "%.2f"|format(probability * 100) }}%</strong>
+    </div>
+    
+    <a href="/" class="back-btn">Check Another Transaction</a>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Checkout</title>
+    <style>
+        body { font-family: Arial; max-width: 500px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { background: #4CAF50; color: white; padding: 10px 15px; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Complete Your Purchase</h1>
+    <form action="/process-transaction" method="post">
+        <div class="form-group">
+            <label>Card Number</label>
+            <input type="text" name="card_last4" placeholder="Last 4 digits" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Amount ($)</label>
+            <input type="number" step="0.01" name="amount" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Merchant Type</label>
+            <select name="merchant_type" required>
+                <option value="gas_station">Gas Station</option>
+                <option value="online_retail">Online Retail</option>
+                <option value="electronics">Electronics</option>
+                <option value="travel">Travel</option>
+                <option value="groceries">Groceries</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Country</label>
+            <input type="text" name="country" placeholder="e.g. US, UK" required>
+        </div>
+        
+        <button type="submit">Complete Transaction</button>
+    </form>
+</body>
+</html>

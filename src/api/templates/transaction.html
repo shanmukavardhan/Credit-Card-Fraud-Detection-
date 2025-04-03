@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        h1, h2 {
+            color: #2c3e50;
+        }
+        
+        .form-container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .form-section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        .result-container {
+            display: none;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        
+        .fraud {
+            background-color: #ffebee;
+            border-left: 5px solid #f44336;
+        }
+        
+        .legit {
+            background-color: #e8f5e9;
+            border-left: 5px solid #4caf50;
+        }
+        
+        .feature-display {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+            padding: 10px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Tabs */
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            color: #333;
+        }
+        
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        
+        .tab button.active {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            background: white;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Credit Card Fraud Detection Demo</h1>
+    
+    <div class="form-container">
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'basic')">Basic Info</button>
+            <button class="tablinks" onclick="openTab(event, 'geographic')">Geographic</button>
+            <button class="tablinks" onclick="openTab(event, 'merchant')">Merchant</button>
+            <button class="tablinks" onclick="openTab(event, 'user')">User</button>
+            <button class="tablinks" onclick="openTab(event, 'device')">Device</button>
+            <button class="tablinks" onclick="openTab(event, 'payment')">Payment</button>
+        </div>
+        
+        <form id="transactionForm">
+            <!-- Basic Info Tab -->
+            <div id="basic" class="tabcontent" style="display: block;">
+                <h2>Transaction Details</h2>
+                <div class="form-group">
+                    <label for="transaction_id">Transaction ID</label>
+                    <input type="text" id="transaction_id" name="transaction_id" value="T" + Math.floor(Math.random() * 10000)">
+                </div>
+                
+                <div class="form-group">
+                    <label for="amount">Amount ($)</label>
+                    <input type="number" step="0.01" id="amount" name="amount" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="currency">Currency</label>
+                    <select id="currency" name="currency" required>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="transaction_channel">Transaction Channel</label>
+                    <select id="transaction_channel" name="transaction_channel" required>
+                        <option value="web">Web</option>
+                        <option value="mobile">Mobile</option>
+                        <option value="api">API</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Geographic Tab -->
+            <div id="geographic" class="tabcontent">
+                <h2>Geographic Information</h2>
+                
+                <div class="form-section">
+                    <h3>Merchant Location</h3>
+                    <div class="form-group">
+                        <label for="merchant_latitude">Latitude</label>
+                        <input type="number" step="0.0001" id="merchant_latitude" name="merchant_latitude">
+                    </div>
+                    <div class="form-group">
+                        <label for="merchant_longitude">Longitude</label>
+                        <input type="number" step="0.0001" id="merchant_longitude" name="merchant_longitude">
+                    </div>
+                    <div class="form-group">
+                        <label for="merchant_city">City</label>
+                        <input type="text" id="merchant_city" name="merchant_city">
+                    </div>
+                    <div class="form-group">
+                        <label for="merchant_country">Country</label>
+                        <input type="text" id="merchant_country" name="merchant_country" value="US">
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3>User Location</h3>
+                    <div class="form-group">
+                        <label for="user_ip_latitude">IP Latitude</label>
+                        <input type="number" step="0.0001" id="user_ip_latitude" name="user_ip_latitude">
+                    </div>
+                    <div class="form-group">
+                        <label for="user_ip_longitude">IP Longitude</label>
+                        <input type="number" step="0.0001" id="user_ip_longitude" name="user_ip_longitude">
+                    </div>
+                    <div class="form-group">
+                        <label for="ip_distance_km">Distance from Home (km)</label>
+                        <input type="number" step="0.1" id="ip_distance_km" name="ip_distance_km">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Merchant Tab -->
+            <div id="merchant" class="tabcontent">
+                <h2>Merchant Information</h2>
+                
+                <div class="form-group">
+                    <label for="merchant_category">Category</label>
+                    <select id="merchant_category" name="merchant_category">
+                        <option value="electronics">Electronics</option>
+                        <option value="retail">Retail</option>
+                        <option value="food">Food</option>
+                        <option value="travel">Travel</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="merchant_risk_score">Risk Score (0-1)</label>
+                    <input type="number" step="0.01" min="0" max="1" id="merchant_risk_score" name="merchant_risk_score" value="0.1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="merchant_chargeback_rate">Chargeback Rate</label>
+                    <input type="number" step="0.001" min="0" max="1" id="merchant_chargeback_rate" name="merchant_chargeback_rate" value="0.01">
+                </div>
+            </div>
+            
+            <!-- User Tab -->
+            <div id="user" class="tabcontent">
+                <h2>User Information</h2>
+                
+                <div class="form-group">
+                    <label for="user_age">Age</label>
+                    <input type="number" id="user_age" name="user_age" min="18" max="100">
+                </div>
+                
+                <div class="form-group">
+                    <label for="user_credit_score">Credit Score</label>
+                    <input type="number" id="user_credit_score" name="user_credit_score" min="300" max="850">
+                </div>
+                
+                <div class="form-group">
+                    <label for="user_prev_chargebacks">Previous Chargebacks</label>
+                    <input type="number" id="user_prev_chargebacks" name="user_prev_chargebacks" min="0">
+                </div>
+            </div>
+            
+            <!-- Device Tab -->
+            <div id="device" class="tabcontent">
+                <h2>Device Information</h2>
+                
+                <div class="form-group">
+                    <label for="device_type">Device Type</label>
+                    <select id="device_type" name="device_type">
+                        <option value="mobile">Mobile</option>
+                        <option value="desktop">Desktop</option>
+                        <option value="tablet">Tablet</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="device_os">Operating System</label>
+                    <input type="text" id="device_os" name="device_os" value="iOS 15.4">
+                </div>
+                
+                <div class="form-group">
+                    <label for="device_browser">Browser</label>
+                    <input type="text" id="device_browser" name="device_browser" value="Safari">
+                </div>
+            </div>
+            
+            <!-- Payment Tab -->
+            <div id="payment" class="tabcontent">
+                <h2>Payment Information</h2>
+                
+                <div class="form-group">
+                    <label for="payment_type">Payment Type</label>
+                    <select id="payment_type" name="payment_type">
+                        <option value="credit_card">Credit Card</option>
+                        <option value="debit_card">Debit Card</option>
+                        <option value="paypal">PayPal</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="card_brand">Card Brand</label>
+                    <select id="card_brand" name="card_brand">
+                        <option value="VISA">VISA</option>
+                        <option value="MasterCard">MasterCard</option>
+                        <option value="Amex">American Express</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="card_3ds_authenticated">3D Secure Authentication</label>
+                    <select id="card_3ds_authenticated" name="card_3ds_authenticated">
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <button type="button" onclick="submitTransaction()">Check for Fraud</button>
+            </div>
+        </form>
+        
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner"></div>
+            <p>Analyzing transaction for fraud patterns...</p>
+        </div>
+        
+        <div class="result-container" id="resultContainer">
+            <h2>Fraud Detection Result</h2>
+            <p>Probability of fraud: <span id="fraudProbability">0</span>%</p>
+            <p>Threshold: <span id="fraudThreshold">0.5</span></p>
+            <p>Decision: <strong id="fraudDecision">Legitimate</strong></p>
+            
+            <h3>Generated Features</h3>
+            <div class="feature-display" id="featureDisplay"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab functionality
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        // Generate random values for demo
+        function generateRandomValues() {
+            // Basic info
+            document.getElementById('amount').value = (Math.random() * 1000).toFixed(2);
+            
+            // Geographic
+            document.getElementById('merchant_latitude').value = (Math.random() * 180 - 90).toFixed(4);
+            document.getElementById('merchant_longitude').value = (Math.random() * 360 - 180).toFixed(4);
+            document.getElementById('user_ip_latitude').value = (Math.random() * 180 - 90).toFixed(4);
+            document.getElementById('user_ip_longitude').value = (Math.random() * 360 - 180).toFixed(4);
+            document.getElementById('ip_distance_km').value = (Math.random() * 1000).toFixed(1);
+            
+            // User
+            document.getElementById('user_age').value = Math.floor(Math.random() * 50 + 18);
+            document.getElementById('user_credit_score').value = Math.floor(Math.random() * 500 + 300);
+            document.getElementById('user_prev_chargebacks').value = Math.floor(Math.random() * 3);
+        }
+        
+        // Generate derived features
+        function generateDerivedFeatures(formData) {
+            // Time-based features
+            const now = new Date();
+            formData.set('transaction_hour', now.getHours());
+            formData.set('transaction_day_of_week', now.getDay());
+            formData.set('transaction_day_of_month', now.getDate());
+            
+            // Behavioral features
+            formData.set('transactions_last_24h', Math.floor(Math.random() * 5));
+            formData.set('transactions_last_7d', Math.floor(Math.random() * 15));
+            
+            // Risk scores
+            formData.set('time_of_day_risk_score', (Math.random() * 0.2).toFixed(2));
+            formData.set('device_trust_score', (0.8 + Math.random() * 0.2).toFixed(2));
+            formData.set('behavioral_anomaly_score', (Math.random() * 0.3).toFixed(2));
+            
+            // Add all other derived features with reasonable random values
+            for (let i = 1; i <= 50; i++) {
+                formData.set(`engineered_feature_${i}`, Math.random().toFixed(2));
+            }
+            
+            return formData;
+        }
+        
+        // Submit transaction to fraud detection API
+        async function submitTransaction() {
+            const transactionData = {
+                amount: parseFloat(document.getElementById('amount').value),
+                time: Date.now() / 1000, // Current timestamp in seconds
+                currency: document.getElementById('currency').value,
+                transaction_channel: document.getElementById('transaction_channel').value,
+                
+                // Geographic Information
+                merchant_latitude: parseFloat(document.getElementById('merchant_latitude').value) || null,
+                merchant_longitude: parseFloat(document.getElementById('merchant_longitude').value) || null,
+                merchant_city: document.getElementById('merchant_city').value || null,
+                merchant_country: document.getElementById('merchant_country').value || null,
+                user_ip_latitude: parseFloat(document.getElementById('user_ip_latitude').value) || null,
+                user_ip_longitude: parseFloat(document.getElementById('user_ip_longitude').value) || null,
+                ip_distance_km: parseFloat(document.getElementById('ip_distance_km').value) || null,
+                
+                // Merchant Information
+                merchant_category: document.getElementById('merchant_category').value || null,
+                merchant_risk_score: parseFloat(document.getElementById('merchant_risk_score').value) || null,
+                merchant_chargeback_rate: parseFloat(document.getElementById('merchant_chargeback_rate').value) || null,
+                
+                // User Information
+                user_age: parseInt(document.getElementById('user_age').value) || null,
+                user_credit_score: parseInt(document.getElementById('user_credit_score').value) || null,
+                user_prev_chargebacks: parseInt(document.getElementById('user_prev_chargebacks').value) || null,
+                
+                // Device Information
+                device_type: document.getElementById('device_type').value || null,
+                device_os: document.getElementById('device_os').value || null,
+                device_browser: document.getElementById('device_browser').value || null,
+                
+                // Payment Information
+                payment_type: document.getElementById('payment_type').value || null,
+                card_brand: document.getElementById('card_brand').value || null,
+                card_3ds_authenticated: parseInt(document.getElementById('card_3ds_authenticated').value) || null,
+                
+                // Derived Features
+                transaction_hour: new Date().getHours(),
+                transaction_day_of_week: new Date().getDay(),
+                transaction_day_of_month: new Date().getDate(),
+                transactions_last_24h: Math.floor(Math.random() * 5),
+                transactions_last_7d: Math.floor(Math.random() * 15),
+                time_of_day_risk_score: parseFloat((Math.random() * 0.2).toFixed(2)),
+                device_trust_score: parseFloat((0.8 + Math.random() * 0.2).toFixed(2)),
+                behavioral_anomaly_score: parseFloat((Math.random() * 0.3).toFixed(2))
+            };
+
+            console.log("Submitting transaction data:", transactionData);
+
+            try {
+                const response = await fetch('/api/predict_raw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(transactionData),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error("API Error:", errorData);
+                    throw new Error(errorData.detail || `API request failed with status ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log("Received prediction result:", result);
+            } catch (error) {
+                console.error("Error:", error);
+                alert(`Error: ${error.message}`);
+            }
+        }
+        
+        // Helper function to display important features
+        function displayFeatures(features) {
+            const featureDisplay = document.getElementById('featureDisplay');
+            featureDisplay.innerHTML = '';
+            
+            const featureList = document.createElement('ul');
+            
+            Object.entries(features).forEach(([key, value]) => {
+                const item = document.createElement('li');
+                item.innerHTML = `<strong>${key.replace(/_/g, ' ')}:</strong> ${value}`;
+                featureList.appendChild(item);
+            });
+            
+            featureDisplay.appendChild(featureList);
+        }
+        
+        // Initialize with random values for demo
+        window.onload = function() {
+            generateRandomValues();
+        };
+    </script>
+</body>
+</html>
